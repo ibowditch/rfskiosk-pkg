@@ -1,4 +1,4 @@
-Package: rfstag-kiosk
+Package: rfskiosk-pkg
 Version: @VERSION@
 Architecture: all
 Maintainer: Ian Bowditch <ibowditch@gmail.com>

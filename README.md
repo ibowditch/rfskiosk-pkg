@@ -1,8 +1,11 @@
-# rfstag-kiosk
+# rfskiosk-pkg
 
 System integration for RFStag sign-in kiosks on **64-bit Raspberry Pi OS
 (Trixie)**: the browser kiosk service, plus plug-and-play NFC readers.
-Builds `rfstag-kiosk_<version>_all.deb`.
+Builds `rfskiosk-pkg_<version>_all.deb`.
+
+(Not to be confused with the older `rfstag-kiosk` GitHub repo, which is the
+nfcserver2 apt repository served at ibowditch.github.io/rfstag-kiosk.)
 
 This replaces `nfcserver3` **for new images only**. The ~20 field units keep
 running nfcserver3 from its own apt repo, untouched; they never have this
@@ -34,7 +37,7 @@ enabled; only `launch_kiosk2.service` (the browser) is.
 ```
 
 Per-kiosk settings go in `/home/pi/.config/rfstag/local.env` (written by
-Ansible; see `/usr/share/doc/rfstag-kiosk/local-example.env`).
+Ansible; see `/usr/share/doc/rfskiosk-pkg/local-example.env`).
 
 Not in this package (installed separately, by Ansible):
 
@@ -44,7 +47,7 @@ Not in this package (installed separately, by Ansible):
 ## Build
 
 ```
-./build-deb.sh        # -> dist/rfstag-kiosk_<VERSION>_all.deb
+./build-deb.sh        # -> dist/rfskiosk-pkg_<VERSION>_all.deb
 ```
 
 Bump `VERSION` for each release.
@@ -52,7 +55,7 @@ Bump `VERSION` for each release.
 ## Test on a bench Pi
 
 ```
-sudo apt install ./dist/rfstag-kiosk_*_all.deb
+sudo apt install ./dist/rfskiosk-pkg_*_all.deb
 ```
 
 Then, for each reader, and for pairs of readers:

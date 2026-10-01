@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Builds dist/rfstag-kiosk_<VERSION>_all.deb. Runs anywhere with dpkg-deb
+# Builds dist/rfskiosk-pkg_<VERSION>_all.deb. Runs anywhere with dpkg-deb
 # (Debian/Ubuntu dev machine or a Pi): nothing here is compiled.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-PKG=rfstag-kiosk
+PKG=rfskiosk-pkg
 VERSION="$(tr -d ' \n' < VERSION)"
 
 STAGE="$(mktemp -d)"
