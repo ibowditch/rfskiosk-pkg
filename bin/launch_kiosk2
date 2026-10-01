@@ -13,6 +13,12 @@ if [ -z "$WAYLAND_DISPLAY" ] && command -v xset >/dev/null 2>&1; then
 fi
 
 INIFILE=${NFC_INI_FILE:-/etc/rfstag/nfcreader.ini}
+# Fall back to the packaged ini if NFC_INI_FILE points somewhere that doesn't
+# exist (e.g. a local.env carried over from an nfcserver3 kiosk).
+if [ ! -f "$INIFILE" ]; then
+  echo "launch_kiosk2: $INIFILE not found, using /etc/rfstag/nfcreader.ini" >&2
+  INIFILE=/etc/rfstag/nfcreader.ini
+fi
 
 # Always use the DEFAULT section in the INI file to obtain necessary details
 INISECTION='DEFAULT'
@@ -26,7 +32,8 @@ SCH=${SCHEME:-'https'}
 
 KPROFILE=${KIOSK_CHROME_PROFILE:-/home/pi/.config/chromium}
 
-KURI=$($CRUDINI --get $INIFILE $INISECTION KIOSK_URI)
+KURI=$($CRUDINI --get "$INIFILE" $INISECTION KIOSK_URI 2>/dev/null || true)
+KURI=${KURI:-bfb/kiosk}
 
 KIOSK_URL="${SCH}://${BRIG}.${SERV}/${KURI}/${KLOC}"
 
