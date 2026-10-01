@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "remove" ]; then
+    systemctl stop sony-reader.service acrreader.service 'vtapreader@*.service' || true
+    systemctl disable launch_kiosk2.service || true
+fi
+
+exit 0

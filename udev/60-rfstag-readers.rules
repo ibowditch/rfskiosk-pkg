@@ -1,0 +1,30 @@
+# RFStag kiosk NFC readers: plug in -> its service starts; unplug -> it stops.
+#
+# Each rule tags the device for systemd and names the reader's service in
+# SYSTEMD_WANTS. The service BindsTo= the device unit, so systemd stops it
+# when the reader is unplugged. At boot, udev's coldplug replays "add" for
+# readers already attached, so the same rules start them then too.
+#
+# Several different readers can be attached at once; each has its own service.
+
+# --- Sony RC-S380 (PaSoRi), models 06c1 / 06c3 -> nfckiosk -------------------
+# nfcpy opens the raw USB device as user pi, hence the group/mode.
+ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", \
+  ATTR{idVendor}=="054c", ATTR{idProduct}=="06c1|06c3", \
+  GROUP="plugdev", MODE="0660", SYMLINK+="sony_reader", \
+  TAG+="systemd", ENV{SYSTEMD_WANTS}+="sony-reader.service"
+
+# --- VTAP100 (USB serial) -> vtapreader@<tty>.service -------------------------
+# One instance per reader, named after its tty (e.g. vtapreader@ttyACM0).
+# /dev/vtap_reader also points at the most recently attached one.
+ACTION=="add", SUBSYSTEM=="tty", \
+  ATTRS{idVendor}=="303a", ATTRS{idProduct}=="4007", \
+  GROUP="dialout", MODE="0660", SYMLINK+="vtap_reader", \
+  TAG+="systemd", ENV{SYSTEMD_WANTS}+="vtapreader@%k.service"
+
+# --- ACS ACR1552U-MW / WalletMate II -> acrreader -----------------------------
+# Accessed through pcscd (which owns the device), not opened directly.
+ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", \
+  ATTR{idVendor}=="072f", ATTR{idProduct}=="2401", \
+  SYMLINK+="acr_reader", \
+  TAG+="systemd", ENV{SYSTEMD_WANTS}+="acrreader.service"

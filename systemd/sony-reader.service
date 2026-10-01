@@ -1,0 +1,28 @@
+# Sony RC-S380 reader + kiosk speaker beeps (rfskiosk2 `nfckiosk`).
+# Started by udev (60-rfstag-readers.rules) when the reader is plugged in and
+# stopped when it is unplugged. No [Install] section: never enable this.
+
+[Unit]
+Description=RFStag Sony NFC reader (nfckiosk)
+BindsTo=dev-sony_reader.device
+After=dev-sony_reader.device network-online.target sound.target user@1000.service
+Wants=network-online.target user@1000.service
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi
+EnvironmentFile=/etc/rfstag/base.env
+EnvironmentFile=-/home/pi/.config/rfstag/local.env
+Environment=PYTHONUNBUFFERED=1
+# Sound from a system service: talk to pi's PipeWire/Pulse session
+# (kept running at boot by `loginctl enable-linger pi`, set in postinst).
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=PULSE_SERVER=unix:/run/user/1000/pulse/native
+ExecStart=/home/pi/.local/bin/nfckiosk
+Restart=on-failure
+RestartSec=5
+SyslogIdentifier=sony-reader

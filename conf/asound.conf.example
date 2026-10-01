@@ -1,0 +1,19 @@
+# Universal ALSA Routing Configuration for sony-reader.service
+
+# Primary: Route audio via PulseAudio/PipeWire user socket (matching PULSE_SERVER)
+pcm.!default {
+    type pulse
+    fallback "hardware_dmix"
+}
+
+ctl.!default {
+    type pulse
+}
+
+# Fallback: Direct hardware mixing via dmix if PipeWire socket is unavailable
+pcm.hardware_dmix {
+    type plug
+    slave {
+        pcm "hw:Headphones,0"
+    }
+}

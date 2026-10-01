@@ -1,0 +1,25 @@
+# VTAP100 reader (rfskiosk2 `vtapreader`), one instance per reader:
+# vtapreader@ttyACM0.service reads /dev/ttyACM0. Started by udev
+# (60-rfstag-readers.rules) and stopped when that reader is unplugged.
+# The VTAP does its own beep/LED feedback. Never enable this.
+
+[Unit]
+Description=RFStag VTAP100 reader on /dev/%I
+BindsTo=dev-%i.device
+After=dev-%i.device network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi
+EnvironmentFile=/etc/rfstag/base.env
+EnvironmentFile=-/home/pi/.config/rfstag/local.env
+Environment=PYTHONUNBUFFERED=1
+Environment=VTAP_PORT=/dev/%I
+ExecStart=/home/pi/.local/bin/vtapreader
+Restart=on-failure
+RestartSec=5

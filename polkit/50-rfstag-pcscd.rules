@@ -1,0 +1,11 @@
+// Let the kiosk user use smart-card readers through pcscd.
+// pcsc-lite 2.x (bookworm/trixie) checks polkit, and by default only allows
+// active local sessions -- a system service running as pi has none, so
+// acrreader would get "access denied" without this.
+polkit.addRule(function (action, subject) {
+    if ((action.id == "org.debian.pcsc-lite.access_pcsc" ||
+         action.id == "org.debian.pcsc-lite.access_card") &&
+        subject.user == "pi") {
+        return polkit.Result.YES;
+    }
+});

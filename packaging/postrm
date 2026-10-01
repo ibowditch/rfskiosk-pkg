@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    remove|purge)
+        systemctl daemon-reload || true
+        udevadm control --reload-rules || true
+        ;;
+esac
+
+exit 0

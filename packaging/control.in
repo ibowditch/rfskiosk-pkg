@@ -1,0 +1,20 @@
+Package: rfstag-kiosk
+Version: @VERSION@
+Architecture: all
+Maintainer: Ian Bowditch <ibowditch@gmail.com>
+Installed-Size: @SIZE@
+Section: misc
+Priority: optional
+Depends: pipx, crudini, pcscd, chromium | chromium-browser, polkitd | policykit-1, systemd, udev
+Recommends: rfstag-acsvas, wlr-randr
+Conflicts: nfcserver3
+Replaces: nfcserver3
+Description: RFStag sign-in kiosk: system integration
+ Browser kiosk service, and plug-and-play support for the NFC readers:
+ Sony RC-S380, VTAP100 and ACS ACR1552U. Plugging a reader in starts its
+ service (udev), unplugging stops it, and several readers can be attached
+ at once.
+ .
+ The reader programs themselves come from the rfskiosk2 Python package,
+ installed with pipx for user pi (~pi/.local/bin). Google Wallet phone taps
+ on the ACR1552U also need rfstag-acsvas.

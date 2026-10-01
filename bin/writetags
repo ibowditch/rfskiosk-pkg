@@ -1,0 +1,32 @@
+#!/bin/bash
+# Write new member tags on the kiosk's Sony reader.
+#
+#   writetags              # tags for this kiosk's brigade (KIOSK_BRIGADE or hostname)
+#   writetags <brigade>    # tags for another brigade
+#
+# Pauses the Sony reader service while writing, and restarts it afterwards.
+set -euo pipefail
+
+SERVICE=sony-reader.service
+NFCKIOSK=/home/pi/.local/bin/nfckiosk
+
+if ! [ -e /dev/sony_reader ]; then
+    echo "No Sony reader plugged in (/dev/sony_reader missing)." >&2
+    exit 1
+fi
+
+echo "Taking over the NFC reader..."
+sudo systemctl stop "$SERVICE"
+trap 'echo "Restarting $SERVICE"; sudo systemctl start "$SERVICE"' EXIT
+
+# Same environment the service gets.
+set -o allexport
+. /etc/rfstag/base.env
+[ -f "$HOME/.config/rfstag/local.env" ] && . "$HOME/.config/rfstag/local.env"
+set +o allexport
+
+if [ $# -ge 1 ]; then
+    "$NFCKIOSK" -w "$1"
+else
+    "$NFCKIOSK" -w
+fi

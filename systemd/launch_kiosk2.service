@@ -1,0 +1,44 @@
+# This launches a browser as a kiosk, with the url for the required brigade taken from env files.
+
+[Unit]
+Description=RFSTag kiosk
+Requires=graphical.target
+After=multi-user.target graphical.target
+
+[Service]
+WorkingDirectory=/home/pi
+User=pi
+
+# Very important: XDG_RUNTIME_DIR required when generating sound from a systemd/crontab/rc.local background service
+# Other values are defaults for nfc reader, with KIOSK_BRIGADE defaulting to the host name.
+#     See https://www.freedesktop.org/software/systemd/man/systemd.unit.html
+#Environment="XDG_RUNTIME_DIR=/run/user/1000"
+## Following is used with multiple screens (no-one using at present)
+## Need to be in place or launch_kiosk2 will fail
+#Environment=DISPLAY=:0.0
+#Environment=XAUTHORITY=/home/pi/.Xauthority
+#
+## Version: x.p
+
+# Universal Environment Configuration (Bookworm & Trixie)
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
+Environment="DISPLAY=:0"
+Environment="WAYLAND_DISPLAY=wayland-0"
+Environment="XAUTHORITY=/home/pi/.Xauthority"
+
+# Set required env variables.
+EnvironmentFile=/etc/rfstag/base.env
+# Allow local override of these env vars - Optional
+EnvironmentFile=-/home/pi/.config/rfstag/local.env
+
+# Use #! /bin/bash at start of script rather than explicitly start bash with /usr/bin/bash
+# If profile locked, use rm -rf ~/.config/chromium/Singleton*
+# See https://github.com/puppeteer/puppeteer/issues/4860
+ExecStart=/usr/bin/launch_kiosk2
+
+# Restart if failure. Can be caused by network or reader failing.
+RestartSec=10s
+Restart=on-failure
+
+[Install]
+WantedBy=graphical.target

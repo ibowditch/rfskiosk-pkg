@@ -1,0 +1,32 @@
+# ACS ACR1552U-MW / WalletMate II reader (rfskiosk2 `acrreader`).
+# Started by udev (60-rfstag-readers.rules) when the reader is plugged in and
+# stopped when it is unplugged. Never enable this.
+#
+# Physical tags work with just pcscd + ACS's acsccid driver. Google Wallet
+# phone taps and reader beep/LED also need the rfstag-acsvas package, which
+# acrreader finds at /usr/lib/rfstag/acs_smarttap_bridge and runs itself as a
+# child process (so this one unit supervises both). The bridge picks the
+# reader's port itself (VAS_PORT=auto) and never provisions on a field Pi.
+
+[Unit]
+Description=RFStag ACR1552U reader (acrreader)
+BindsTo=dev-acr_reader.device
+After=dev-acr_reader.device pcscd.socket pcscd.service network-online.target
+Wants=pcscd.socket network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi
+EnvironmentFile=/etc/rfstag/base.env
+EnvironmentFile=-/home/pi/.config/rfstag/local.env
+# Unbuffered, so log lines reach the journal as they happen; acrreader also
+# tags them with syslog priorities (journalctl -u acrreader -p warning works).
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/pi/.local/bin/acrreader
+Restart=on-failure
+RestartSec=5
+SyslogIdentifier=acrreader

@@ -1,0 +1,85 @@
+#! /bin/bash
+# Launch a browser with the bushfire app. Assumes necessary environment variables are set beforehand.
+
+set -e
+set -v
+set -x
+
+# Turn off screen blanking for X11 environments (Bookworm)
+if [ -z "$WAYLAND_DISPLAY" ] && command -v xset >/dev/null 2>&1; then
+  xset s noblank || true
+  xset s off || true
+  xset -dpms || true
+fi
+
+INIFILE=${NFC_INI_FILE:-/etc/rfstag/nfcreader.ini}
+
+# Always use the DEFAULT section in the INI file to obtain necessary details
+INISECTION='DEFAULT'
+CRUDINI=/usr/bin/crudini
+
+# Other env vars must be set, normally in base.env, but can be overriden in local.env
+BRIG=${KIOSK_BRIGADE:-$(hostname)}
+SERV=${BUSHFIRE_SERVER}
+KLOC=${KIOSK_LOCATION}
+SCH=${SCHEME:-'https'}
+
+KPROFILE=${KIOSK_CHROME_PROFILE:-/home/pi/.config/chromium}
+
+KURI=$($CRUDINI --get $INIFILE $INISECTION KIOSK_URI)
+
+KIOSK_URL="${SCH}://${BRIG}.${SERV}/${KURI}/${KLOC}"
+
+echo "KIOSK_URL" $KIOSK_URL > ~/klurl
+
+# Clear singleton locks to prevent profile startup errors
+rm -rf $KPROFILE/Singleton*
+rm -rf $KPROFILE/Default/Singleton*
+
+# Clear cache before starting to force reload - especially after new releases
+[ -d $KPROFILE/Default/Cache ] && rm -rf $KPROFILE/Default/Cache/*
+
+# Prevent warning about not closing down properly
+if [ -w $KPROFILE/Default/Preferences ]; then
+  # Remove traces of improper shutdown
+  sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' $KPROFILE/Default/Preferences
+  sed -i 's/"exit_type":"Crashed"/"exit_type": "Normal"/'  $KPROFILE/Default/Preferences
+  # Lock in place
+  chmod a-w $KPROFILE/Default/Preferences
+fi
+
+# On-screen keyboard support
+[[ -v SCREEN_KEYBOARD ]] && nohup $SCREEN_KEYBOARD  &> /dev/null &
+
+# Calculate kiosk screen size: see https://gemini.google.com/app/4cfaa08bdde21dc2
+
+WIDTH=$(wlr-randr | awk '/current/ {split($1,a,"x"); print a[1]}')
+HEIGHT=$(wlr-randr | awk '/current/ {split($1,a,"x"); print a[2]}')
+
+# Fallback values if wlr-randr returned nothing eg X11
+WIDTH=${WIDTH:-1920}
+HEIGHT=${HEIGHT:-1080}
+
+# Assemble universal Chromium flags
+
+CHROMIUM_FLAGS=(
+  "--noerrdialogs"
+  "--disable-infobars"
+  "--no-first-run"
+  "--disable-session-crashed-bubble"
+  "--disable-gcm"
+  "--check-for-update-interval=31536000"
+)
+
+# Select Ozone rendering platform based on active display server
+if [ -n "$WAYLAND_DISPLAY" ]; then
+  # Native Wayland flags for Trixie (Labwc/Wayfire)
+  CHROMIUM_FLAGS+=("--enable-features=UseOzonePlatform" "--ozone-platform=wayland")
+else
+  # X11 fallback flags for Bookworm (LXDE/X11)
+  CHROMIUM_FLAGS+=("--ozone-platform=x11")
+fi
+
+# Launch Chromium replacing the shell process (bookworm: chromium-browser, trixie: chromium)
+BROWSER=$(command -v chromium-browser || command -v chromium)
+exec "$BROWSER" "${CHROMIUM_FLAGS[@]}" --start-fullscreen --window-size="${WIDTH},${HEIGHT}" --window-position=0,0 --app="$KIOSK_URL"

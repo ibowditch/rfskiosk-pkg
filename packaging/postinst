@@ -1,0 +1,40 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+    if id pi >/dev/null 2>&1; then
+        # Reader access: Sony (plugdev), VTAP (dialout); beeps (audio).
+        usermod -aG plugdev,dialout,audio pi || true
+        # Keep pi's PipeWire/Pulse session running from boot, so the reader
+        # services (system services running as pi) can play sounds.
+        loginctl enable-linger pi || true
+
+        install -d -o pi -g pi -m 0755 /home/pi/.config/rfstag
+        # nfckiosk plays $HOME/<SOUNDS>/*.wav (SOUNDS=Music in nfcreader.ini).
+        # Link the packaged sounds there, without touching any existing files.
+        install -d -o pi -g pi -m 0755 /home/pi/Music
+        for f in /usr/share/rfstag/sounds/*.wav; do
+            t="/home/pi/Music/$(basename "$f")"
+            [ -e "$t" ] || [ -L "$t" ] || ln -s "$f" "$t"
+        done
+    fi
+
+    # Persistent journal, so logs survive the weekly reboot.
+    if [ ! -d /var/log/journal ]; then
+        mkdir -p /var/log/journal
+        systemd-tmpfiles --create --prefix /var/log/journal || true
+    fi
+
+    systemctl daemon-reload || true
+    systemctl enable launch_kiosk2.service || true
+
+    # Apply the reader rules now, and start services for readers already
+    # plugged in (otherwise that only happens at the next boot or replug).
+    udevadm control --reload-rules || true
+    udevadm trigger --action=add --subsystem-match=usb --subsystem-match=tty || true
+
+    # On upgrade, restart running reader services so they pick up changes.
+    systemctl try-restart sony-reader.service acrreader.service 'vtapreader@*.service' || true
+fi
+
+exit 0
