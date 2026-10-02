@@ -5,7 +5,7 @@ Maintainer: Ian Bowditch <ibowditch@gmail.com>
 Installed-Size: @SIZE@
 Section: misc
 Priority: optional
-Depends: pipx, crudini, pcscd, chromium | chromium-browser, polkitd | policykit-1, systemd, udev
+Depends: pipx, crudini, pcscd, chromium | chromium-browser, polkitd | policykit-1, systemd, udev, pipewire-alsa
 Recommends: rfstag-acsvas, wlr-randr
 Conflicts: nfcserver3
 Replaces: nfcserver3

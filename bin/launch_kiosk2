@@ -46,13 +46,32 @@ rm -rf $KPROFILE/Default/Singleton*
 # Clear cache before starting to force reload - especially after new releases
 [ -d $KPROFILE/Default/Cache ] && rm -rf $KPROFILE/Default/Cache/*
 
-# Prevent warning about not closing down properly
-if [ -w $KPROFILE/Default/Preferences ]; then
-  # Remove traces of improper shutdown
-  sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' $KPROFILE/Default/Preferences
-  sed -i 's/"exit_type":"Crashed"/"exit_type": "Normal"/'  $KPROFILE/Default/Preferences
-  # Lock in place
-  chmod a-w $KPROFILE/Default/Preferences
+# Before every launch, tidy Chromium's saved profile state:
+#  - mark the last session as a clean exit (no "Restore pages?" bubble)
+#  - forget the saved window placement, so a window someone took out of
+#    full screen (F11) doesn't come back that way after a restart
+# (Making Preferences read-only doesn't work: Chromium replaces the file
+# rather than writing into it, so this has to run on every launch.)
+PREFS=$KPROFILE/Default/Preferences
+if [ -f "$PREFS" ]; then
+  chmod u+w "$PREFS" 2>/dev/null || true
+  python3 - "$PREFS" <<'EOF' || true
+import json, sys
+path = sys.argv[1]
+try:
+    with open(path) as f:
+        prefs = json.load(f)
+except Exception:
+    sys.exit(0)            # unreadable/corrupt: leave it to Chromium
+profile = prefs.setdefault("profile", {})
+profile["exited_cleanly"] = True
+profile["exit_type"] = "Normal"
+browser = prefs.get("browser", {})
+for key in [k for k in browser if k.endswith("window_placement")]:
+    del browser[key]
+with open(path, "w") as f:
+    json.dump(prefs, f)
+EOF
 fi
 
 # On-screen keyboard support
