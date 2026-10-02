@@ -75,6 +75,7 @@ CHROMIUM_FLAGS=(
   "--no-first-run"
   "--disable-session-crashed-bubble"
   "--disable-gcm"
+  "--password-store=basic"      # no keyring: avoids an "unlock keyring" prompt on auto-login
   "--check-for-update-interval=31536000"
 )
 
