@@ -22,6 +22,8 @@ User=pi
 
 # Universal Environment Configuration (Bookworm & Trixie)
 Environment="XDG_RUNTIME_DIR=/run/user/1000"
+# pi's session bus, so Chromium doesn't log dbus errors
+Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus"
 Environment="DISPLAY=:0"
 Environment="WAYLAND_DISPLAY=wayland-0"
 Environment="XAUTHORITY=/home/pi/.Xauthority"
